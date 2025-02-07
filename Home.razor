@@ -1,0 +1,156 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using System.Linq
+
+
+
+@code {
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+}
+
+<PageTitle>Home</PageTitle>
+
+
+<div>
+	Name:
+	<input type="text" @bind-value="setName"></input>
+</div>
+<div>
+	Current HP: 
+	<input type="number" @bind-value="setCurrentHP"></input>
+</div>
+<div>
+	Maximum HP:
+	<input type="number" @bind-value="setMaxHP"></input>
+</div>
+<div>
+	Initiative:
+	<input type="number" @bind-value="setInitiative"></input>
+</div>
+<button @onclick="addCharacter">Add Character</button>
+<button @onclick="orderByInitiative">Order characters by initiative</button>
+<ul>
+	@foreach (var character in Characters)
+	{
+		<li>
+			@character.Name
+			<div>
+				@character.HPCurrent / @character.HPMax HP
+			</div>
+			<div>
+				Initiative @character.Initiative
+			</div>
+			<div>
+				Change current HP:
+				<input type="number" @bind-value="setNewCurrentHP"></input>
+				<button @onclick="() => changeHP(character.CharID)">Change</button>
+			</div>
+			<div>
+				<button @onclick="() => removeCharacter(character.CharID)">REMOVE</button>
+			</div>
+			</li>
+	}
+</ul>
+<div>
+	Amount of dice: <input type="number" @bind-value="diceAmount"></input>
+</div>
+<div>
+	Dice size: <input type="number" @bind-value="diceFaces"></input>
+</div>
+<button @onclick="diceRolling">Roll</button>
+<p>Roll Result: @rolledValue</p>
+
+<button @onclick="ExportCharacters">Export Characters</button>
+<div>
+	Copy the following:
+	<div>
+
+	</div>
+</div>
+
+
+
+
+@code {
+	List<Character> Characters = new List<Character>{};
+	Dice dice = new Dice();
+	int characterNumber;
+	int diceFaces;
+	int diceAmount;
+	string setName;
+	int setCurrentHP;
+	int setNewCurrentHP;
+	int setMaxHP;
+	int setInitiative;
+	int rolledValue;
+	string charactersExporting;
+	public void diceRolling()
+	{
+		dice.Faces = diceFaces;
+		dice.NumberOfDice = diceAmount;
+		rolledValue = dice.Roll(diceAmount, diceFaces);
+	}
+	public void addCharacter()
+	{
+
+		Characters.Add(new Character { Name = setName, HPMax = setMaxHP, HPCurrent = setCurrentHP, Initiative = setInitiative, CharID = Characters.Count });
+		StateHasChanged();
+	}
+	public void orderByInitiative()
+	{
+		var CharactersSorted = Characters.OrderBy(Char => Char.Initiative);
+		List<Character> CharactersTemp = new List<Character> { };
+
+		foreach (var Char in CharactersSorted)
+		{
+			CharactersTemp.Add(new Character { Name = Char.Name, HPMax = Char.HPMax, HPCurrent = Char.HPCurrent, Initiative = Char.Initiative });
+		}
+		Characters.Clear();
+		foreach (var character in CharactersTemp)
+		{
+			Characters.Add(new Character { Name = character.Name, HPMax = character.HPMax, HPCurrent = character.HPCurrent, Initiative = character.Initiative, CharID = Characters.Count });
+		}
+		StateHasChanged();
+	}
+	public void changeHP(int tempID)
+	{
+		Characters[tempID].HPCurrent = setNewCurrentHP;
+		setNewCurrentHP = 0;
+	}
+	public void removeCharacter(int tempID)
+	{
+		Characters.RemoveAt(tempID);
+		List<Character> CharactersTemp = new List<Character> { };
+		foreach (var Char in Characters)
+		{
+			CharactersTemp.Add(new Character { Name = Char.Name, HPMax = Char.HPMax, HPCurrent = Char.HPCurrent, Initiative = Char.Initiative });
+		}
+		Characters.Clear();
+		foreach (var character in CharactersTemp)
+		{
+			Characters.Add(new Character { Name = character.Name, HPMax = character.HPMax, HPCurrent = character.HPCurrent, Initiative = character.Initiative, CharID = Characters.Count });
+		}
+		StateHasChanged();
+	}
+	public void ExportCharacters()
+	{
+		List<String> charactersExportNames = new List<String> { };
+		List<int> charactersExportInts = new List<int> { };
+		foreach (var character in Characters)
+		{
+			charactersExportNames.Add(new string(character.Name));
+			charactersExportInts.Add(character.HPMax);
+			charactersExportInts.Add(character.HPCurrent);
+			charactersExportInts.Add(character.Initiative);
+		}
+	}
+	public void ImportCharacters(string name, int hpmax, int hpcurrent, int initiative)
+	{
+		Characters.Add(new Character { Name = name, HPMax = hpmax, HPCurrent = hpcurrent, Initiative = initiative, CharID = Characters.Count });
+	}
+}
